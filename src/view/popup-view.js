@@ -152,10 +152,12 @@ export default class PopupView extends AbstractStatefulView {
   #movie;
   #comments = null;
   #handlePopupCancel = null;
+  #handlePopupEsc = null;
 
-  constructor({ movie, comments }, { onCancel }) {
+  constructor({ movie, comments }, { onCancel, onEsc }) {
     super();
     this.#handlePopupCancel = onCancel;
+    this.#handlePopupEsc = onEsc;
     this.#movie = movie;
     this.#comments = comments;
     this._restoreHandlers();
@@ -167,6 +169,7 @@ export default class PopupView extends AbstractStatefulView {
 
   _restoreHandlers() {
     this.#addOnCancelHandler();
+    this.#addOnEscHandler();
   }
 
   #addOnCancelHandler() {
@@ -174,6 +177,15 @@ export default class PopupView extends AbstractStatefulView {
     closeButton.addEventListener('click', (evt) => {
       evt.preventDefault();
       this.#handlePopupCancel();
+    });
+  }
+
+  #addOnEscHandler() {
+    document.addEventListener('keydown', (evt) => {
+      if (evt.code === 'Escape') {
+        evt.preventDefault();
+        this.#handlePopupEsc();
+      }
     });
   }
 
