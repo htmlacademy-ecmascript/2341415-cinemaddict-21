@@ -4,23 +4,28 @@ import CommentsApi from '../api/comments-api.js';
 import { keysToCamelCase } from '../utils.js';
 
 const EVENTS = {
-  MOVIES_CHANGED: 'movies.changed'
+  DISPLAYED_MOVIES_ADDED: 'displayed_movies_added',
+  ALL_MOVIES_DISPLAYED: 'all_movies_displayed'
 };
 
 export default class MoviesModel extends Publisher {
   #moviesApi = new MoviesApi();
   #commentsApi = new CommentsApi();
   #movies;
+  #displayedMoviesCount;
+  #displayedMovies = [];
   // key - movieID, value - array of comments
   #comments = new Map();
 
+  constructor({ displayedMoviesCount }) {
+    super();
+    this.#displayedMoviesCount = displayedMoviesCount;
+  }
+
   async init() {
     const movies = await this.#moviesApi.getList();
-    // const comments = await this.#commentsApi.getList();
     this.#movies = movies.map(keysToCamelCase);
-    this._notify(EVENTS.MOVIES_CHANGED, this.#movies);
-
-    await Promise.all(movies.map(({id}) => this.loadComments(id)));
+    this.addDisplayedMovies();
   }
 
   // addComment(movieId, comment) {
@@ -42,6 +47,19 @@ export default class MoviesModel extends Publisher {
     }
 
     return this.#comments.get(movieId);
+  }
+
+  async addDisplayedMovies() {
+    const addingMovies = this.#movies.slice(this.#displayedMovies.length, this.#displayedMovies.length + this.#displayedMoviesCount);
+    this.#displayedMovies = [...this.#displayedMovies, ...addingMovies];
+
+    this._notify(EVENTS.DISPLAYED_MOVIES_ADDED, addingMovies);
+
+    if (this.#displayedMovies.length >= this.#movies.length) {
+      this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
+    }
+
+    await Promise.all(addingMovies.map(({id}) => this.loadComments(id)));
   }
 
   #createCommentsMap() {

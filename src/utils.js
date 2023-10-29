@@ -47,9 +47,17 @@ function getDurationString(minutes) {
     .replace(' minute', 'M');
 }
 
+function hideOverflow(el) {
+  el.classList.add('hide-overflow');
+}
+function showOverflow(el) {
+  el.classList.remove('hide-overflow');
+}
 
 export {
   keysToCamelCase,
   keysToSnakeCase,
   getDurationString,
+  hideOverflow,
+  showOverflow
 };

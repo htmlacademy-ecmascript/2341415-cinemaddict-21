@@ -780,3 +780,7 @@ button {
   bottom: 5px;
   margin-left: 81px;
 }
+
+.hidden {
+  display: none;
+}

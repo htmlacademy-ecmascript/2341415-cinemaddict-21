@@ -4,16 +4,20 @@ import SortView from '../view/sort-view.js';
 // import PopupView from '../view/popup-view.js';
 import {RenderPosition} from '../framework/render.js';
 import ShowMoreButtonView from '../view/show-more-button-view.js';
+import { EVENTS } from '../models/movies-model.js';
 
 export default class BoardPresenter {
   #mainContainer = null;
   #headerElement = null;
   #popupContainer = null;
+  #moviesModel = null;
+  #showMoreButtonView = null;
 
-  constructor({mainContainer, headerContainer, popupContainer}) {
+  constructor({mainContainer, headerContainer, popupContainer, moviesModel}) {
     this.#mainContainer = mainContainer;
     this.#headerElement = headerContainer;
     this.#popupContainer = popupContainer;
+    this.#moviesModel = moviesModel;
   }
 
   run() {
@@ -21,6 +25,12 @@ export default class BoardPresenter {
     this.#renderLogo();
     this.#renderShowMoreButton();
     this.#renderSort();
+    this.#moviesModel.addObserver(
+      EVENTS.ALL_MOVIES_DISPLAYED,
+      () => {
+        this.#showMoreButtonView.hide();
+      }
+    );
     // this.#renderPopup();
   }
 
@@ -36,7 +46,12 @@ export default class BoardPresenter {
   }
 
   #renderShowMoreButton() {
-    this.#mainContainer.add(new ShowMoreButtonView(), RenderPosition.AFTEREND);
+    const onClick = () => {
+      this.#moviesModel.addDisplayedMovies();
+    };
+    const showMoreButtonView = new ShowMoreButtonView({ onClick });
+    this.#showMoreButtonView = showMoreButtonView;
+    this.#mainContainer.add(this.#showMoreButtonView, RenderPosition.AFTEREND);
   }
 
   #renderSort() {
