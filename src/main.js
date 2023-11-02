@@ -14,8 +14,7 @@ const moviesModel = new MoviesModel({ displayedMoviesCount: DISPLAYED_MOVIES_COU
 const boardPresenter = new BoardPresenter({
   moviesModel,
   mainContainer,
-  headerContainer: new ContainerView(headerElement),
-  popupContainer: new ContainerView(popupElement)
+  headerContainer: new ContainerView(headerElement)
 });
 
 const movieCardsPresenter = new MovieCardsPresenter({

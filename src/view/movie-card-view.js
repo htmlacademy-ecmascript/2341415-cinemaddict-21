@@ -1,39 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import dayjs from 'dayjs';
 import { getDurationString } from '../utils.js';
-// {
-//   "id": "d9ee14cd-c0ca-4eab-8088-2219a0dbdc55",
-//   "comments": [
-//   "915db71a-703a-492a-9242-dfd233a749f2"
-//   ],
-//   "film_info": {
-//   "title": "A Little Pony Without The Carpet",
-//   "alternative_title": "Laziness Who Sold Themselves",
-//   "description": "Oscar-winning film, a war drama about two young people, from the creators of timeless classic "Nu, Pogodi!" and "Alice in Wonderland", with the best fight scenes since Bruce Lee.",
-//   "total_rating": 5.3,
-//   "poster": "images/posters/blue-blazes.jpg",
-//   "age_rating": 0,
-//   "director": "Tom Ford",
-//   "writers": [
-//   "Takeshi Kitano"
-//   ],
-//   "actors": [
-//   "Morgan Freeman"
-//   ],
-//   "genre": [
-//   "Comedy"
-//   ],
-//   "duration": 77,
-//   "release": {
-//   "date": "2019-05-11T00:00:00.000Z",
-//   "release_country": "Finland"
-//   }},
-//   "user_details": {
-//   "watchlist": false,
-//   "already_watched": true,
-//   "watching_date": "2022-11-26T16:12:32.554Z",
-//   "favorite": false
-//   }}
 
 function createMovieCardTemplate(movie) {
 

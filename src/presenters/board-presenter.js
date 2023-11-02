@@ -1,7 +1,6 @@
 import FilterView from '../view/filter-view.js';
 import LogoView from '../view/logo-view.js';
 import SortView from '../view/sort-view.js';
-// import PopupView from '../view/popup-view.js';
 import {RenderPosition} from '../framework/render.js';
 import ShowMoreButtonView from '../view/show-more-button-view.js';
 import { EVENTS } from '../models/movies-model.js';
@@ -9,19 +8,16 @@ import { EVENTS } from '../models/movies-model.js';
 export default class BoardPresenter {
   #mainContainer = null;
   #headerElement = null;
-  #popupContainer = null;
   #moviesModel = null;
   #showMoreButtonView = null;
 
-  constructor({mainContainer, headerContainer, popupContainer, moviesModel}) {
+  constructor({mainContainer, headerContainer, moviesModel}) {
     this.#mainContainer = mainContainer;
     this.#headerElement = headerContainer;
-    this.#popupContainer = popupContainer;
     this.#moviesModel = moviesModel;
   }
 
   run() {
-    this.#renderFilters();
     this.#renderLogo();
     this.#renderShowMoreButton();
     this.#renderSort();
@@ -31,14 +27,23 @@ export default class BoardPresenter {
         this.#showMoreButtonView.hide();
       }
     );
-    // this.#renderPopup();
+    this.#moviesModel.addObserver(
+      EVENTS.FILTRED_MOVIES_CHANGED,
+      (filtredMoviesCount) => {
+        this.#renderFilters(filtredMoviesCount);
+      }
+    );
   }
 
-  // onMoviesChanged(movies) {
-  // }
-
-  #renderFilters() {
-    this.#mainContainer.add(new FilterView(), RenderPosition.BEFOREBEGIN);
+  #renderFilters(filtredMoviesCount) {
+    this.#mainContainer.add(new FilterView(
+      filtredMoviesCount,
+      {
+        onFilterClick: (filterType) => {
+          this.#moviesModel.setFilter(filterType);
+        },
+      },
+    ), RenderPosition.BEFOREBEGIN);
   }
 
   #renderLogo() {
@@ -57,9 +62,4 @@ export default class BoardPresenter {
   #renderSort() {
     this.#mainContainer.add(new SortView(), RenderPosition.BEFOREBEGIN);
   }
-
-  // #renderPopup() {
-  //   this.#popupContainer.add(new PopupView());
-  // }
-
 }
