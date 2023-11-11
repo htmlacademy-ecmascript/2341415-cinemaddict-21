@@ -2,7 +2,6 @@ import FilterView from '../view/filter-view.js';
 import LogoView from '../view/logo-view.js';
 import SortView from '../view/sort-view.js';
 import {RenderPosition} from '../framework/render.js';
-import ShowMoreButtonView from '../view/show-more-button-view.js';
 import { EVENTS } from '../models/movies-model.js';
 
 export default class BoardPresenter {
@@ -10,6 +9,7 @@ export default class BoardPresenter {
   #headerElement = null;
   #moviesModel = null;
   #showMoreButtonView = null;
+  #filterView = null;
 
   constructor({mainContainer, headerContainer, moviesModel}) {
     this.#mainContainer = mainContainer;
@@ -19,44 +19,38 @@ export default class BoardPresenter {
 
   run() {
     this.#renderLogo();
-    this.#renderShowMoreButton();
     this.#renderSort();
     this.#moviesModel.addObserver(
-      EVENTS.ALL_MOVIES_DISPLAYED,
-      () => {
-        this.#showMoreButtonView.hide();
-      }
+      EVENTS.FILTRED_MOVIES_CHANGED,
+      (params) => this.#renderFilters(params)
     );
     this.#moviesModel.addObserver(
-      EVENTS.FILTRED_MOVIES_CHANGED,
-      (filtredMoviesCount) => {
-        this.#renderFilters(filtredMoviesCount);
-      }
+      EVENTS.SELECTED_FILTER_CHANGED,
+      (selectedFilter) => this.#filterView.updateElement({ selectedFilter })
     );
   }
 
-  #renderFilters(filtredMoviesCount) {
-    this.#mainContainer.add(new FilterView(
-      filtredMoviesCount,
+  #renderFilters(params) {
+    if(!this.#filterView) {
+      this.#filterView = this.#createFilterView(params);
+      this.#mainContainer.add(this.#filterView, RenderPosition.BEFOREBEGIN);
+    }
+    this.#filterView.updateElement(params);
+  }
+
+  #createFilterView(params) {
+    return new FilterView(
+      params,
       {
         onFilterClick: (filterType) => {
           this.#moviesModel.setFilter(filterType);
         },
       },
-    ), RenderPosition.BEFOREBEGIN);
+    );
   }
 
   #renderLogo() {
     this.#headerElement.add(new LogoView());
-  }
-
-  #renderShowMoreButton() {
-    const onClick = () => {
-      this.#moviesModel.addDisplayedMovies();
-    };
-    const showMoreButtonView = new ShowMoreButtonView({ onClick });
-    this.#showMoreButtonView = showMoreButtonView;
-    this.#mainContainer.add(this.#showMoreButtonView, RenderPosition.AFTEREND);
   }
 
   #renderSort() {

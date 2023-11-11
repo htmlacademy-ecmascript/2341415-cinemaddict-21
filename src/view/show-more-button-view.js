@@ -23,6 +23,10 @@ export default class ShowMoreButtonView extends AbstractView {
     this.element.classList.add('hidden');
   }
 
+  show() {
+    this.element.classList.remove('hidden');
+  }
+
   #clickHandler = (evt) => {
     evt.preventDefault();
     this.#handleClick();

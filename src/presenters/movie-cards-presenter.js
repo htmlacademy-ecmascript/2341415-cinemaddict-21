@@ -1,20 +1,29 @@
 import MovieCardView from '../view/movie-card-view';
-import PopupView from '../view/popup-view.js';
-import { hideOverflow, showOverflow } from '../utils.js';
 import NoMoviesView from '../view/no-movies-view.js';
 import { EVENTS } from '../models/movies-model';
 
-const body = document.querySelector('body');
 export default class MovieCardsPresenter {
   #cardsContainer = null;
-  #popupContainer = null;
+  #popupPresenter = null;
   moviesModel = null;
+  #movieViewMap = new Map();
 
-  constructor({ mainContainer, popupContainer, moviesModel }) {
-    this.#popupContainer = popupContainer;
+  constructor({ mainContainer, popupPresenter, moviesModel }) {
+    this.#popupPresenter = popupPresenter;
     this.#cardsContainer = mainContainer;
     this.moviesModel = moviesModel;
+
     this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_CHANGED, (displayedMovies) => this.onDisplayedMoviesChanged(displayedMovies));
+
+    this.moviesModel.addObserver(EVENTS.MOVIE_UPDATED, (updatedMovie) => {
+      const movieView = this.#movieViewMap.get(updatedMovie.id);
+      movieView.updateElement({ movie: updatedMovie });
+    });
+
+    this.moviesModel.addObserver(
+      EVENTS.SELECTED_FILTER_CHANGED,
+      () => this.#cardsContainer.clear()
+    );
   }
 
   onDisplayedMoviesAdded(movies) {
@@ -31,25 +40,22 @@ export default class MovieCardsPresenter {
 
   #renderMovieCards(movie) {
     const onClick = async (theMovie) => {
-      hideOverflow(body);
       const comments = await this.moviesModel.getComments(theMovie.id);
-      this.#renderPopup({ movie: theMovie, comments });
+      this.#cardsContainer.block();
+      this.#popupPresenter.renderPopup({ movie: theMovie, comments, onClose: () => this.#cardsContainer.unblock() });
     };
-    const movieCardView = new MovieCardView(movie, { onClick });
+    const onWatchinglistButtonClick = (movieId) => {
+      this.moviesModel.switcIncludingToWatchList(movieId);
+    };
+    const onAlreadyWatchedlistButtonClick = (movieId) => {
+      this.moviesModel.switcIncludingToAlreadyWatchedList(movieId);
+    };
+    const onFavoriteListButtonClick = (movieId) => {
+      this.moviesModel.switcIncludingToFavoriteList(movieId);
+    };
+    const movieCardView = new MovieCardView(movie, { onClick, onWatchinglistButtonClick, onAlreadyWatchedlistButtonClick, onFavoriteListButtonClick});
+    this.#movieViewMap.set(movie.id, movieCardView);
     this.#cardsContainer.add(movieCardView);
-  }
-
-  #renderPopup({ movie, comments }) {
-    const onCancel = () => {
-      this.#popupContainer.clear();
-      showOverflow(body);
-    };
-    const onEsc = () => {
-      this.#popupContainer.clear();
-      showOverflow(body);
-    };
-    this.#popupContainer.clear();
-    this.#popupContainer.add(new PopupView({ movie, comments }, { onCancel, onEsc }));
   }
 
 }

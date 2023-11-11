@@ -30,11 +30,12 @@ function createCommentTemplate({emotion, comment, author, date}) {
         </li>`;
 }
 
-function createPopupTemplate(movie, comments) {
-
-  const { filmInfo } = movie;
+function createPopupTemplate({ movie, comments }) {
+console.log('movie', movie)
+  const { filmInfo, userDetails } = movie;
   const { poster, title, totalRating, alternativeTitle, release, duration, description, genre, ageRating, director, writers, actors } = filmInfo;
   const { date, releaseCountry } = release;
+  const { watchlist, alreadyWatched, favorite } = userDetails;
 
   return `<div class="film-details__inner">
   <div class="film-details__top-container">
@@ -100,9 +101,9 @@ function createPopupTemplate(movie, comments) {
     </div>
 
     <section class="film-details__controls">
-      <button type="button" class="film-details__control-button film-details__control-button--watchlist" id="watchlist" name="watchlist">Add to watchlist</button>
-      <button type="button" class="film-details__control-button film-details__control-button--active film-details__control-button--watched" id="watched" name="watched">Already watched</button>
-      <button type="button" class="film-details__control-button film-details__control-button--favorite" id="favorite" name="favorite">Add to favorites</button>
+      <button type="button" class="film-details__control-button ${watchlist ? 'film-details__control-button--active ' : ''}film-details__control-button--watchlist" id="watchlist" name="watchlist">Add to watchlist</button>
+      <button type="button" class="film-details__control-button ${alreadyWatched ? 'film-details__control-button--active ' : ''}film-details__control-button--watched" id="watched" name="watched">Already watched</button>
+      <button type="button" class="film-details__control-button ${favorite ? 'film-details__control-button--active ' : ''}film-details__control-button--favorite" id="favorite" name="favorite">Add to favorites</button>
     </section>
   </div>
 
@@ -149,27 +150,33 @@ function createPopupTemplate(movie, comments) {
 }
 
 export default class PopupView extends AbstractStatefulView {
-  #movie;
-  #comments = null;
   #handlePopupCancel = null;
   #handlePopupEsc = null;
+  #handleWatchinglistButtonClick = null;
 
-  constructor({ movie, comments }, { onCancel, onEsc }) {
+  constructor({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick }) {
     super();
     this.#handlePopupCancel = onCancel;
     this.#handlePopupEsc = onEsc;
-    this.#movie = movie;
-    this.#comments = comments;
+    this.#handleWatchinglistButtonClick = onWatchinglistButtonClick;
+    this._setState({ movie, comments });
     this._restoreHandlers();
   }
 
   get template() {
-    return createPopupTemplate(this.#movie, this.#comments);
+    return createPopupTemplate(this._state);
+  }
+
+  get movieId() {
+    return this._state.movie.id;
   }
 
   _restoreHandlers() {
     this.#addOnCancelHandler();
     this.#addOnEscHandler();
+    this.#addOnWatchinglistButtonClickHandler();
+    // this.#addonAlreadyWatchedListButtonClickHandler();
+    // this.#addOnFavoriteListButtonClickHandler();
   }
 
   #addOnCancelHandler() {
@@ -188,5 +195,34 @@ export default class PopupView extends AbstractStatefulView {
       }
     });
   }
+
+  #addOnWatchinglistButtonClickHandler() {
+    const buttonElement = this.element.querySelector('.film-details__control-button--watchlist');
+    console.log('buttonElement:', buttonElement)
+
+    buttonElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      this.#handleWatchinglistButtonClick(this._state.movie.id);
+    });
+  }
+
+  // #addonAlreadyWatchedListButtonClickHandler() {
+  //   const buttonElement = this.element.querySelector('.film-card__controls-item--mark-as-watched');
+
+  //   buttonElement.addEventListener('click', (evt) => {
+  //     evt.preventDefault();
+  //     this.#handleAlreadyWatchedListButtonClick(this._state.movie.id);
+  //   });
+  // }
+
+  // #addOnFavoriteListButtonClickHandler() {
+  //   const buttonElement = this.element.querySelector('.film-card__controls-item--favorite');
+
+  //   buttonElement.addEventListener('click', (evt) => {
+  //     evt.preventDefault();
+  //     this.#handleFavoriteListButtonClick(this._state.movie.id);
+  //   });
+  // }
+
 
 }

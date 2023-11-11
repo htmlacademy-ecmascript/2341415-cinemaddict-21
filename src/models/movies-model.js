@@ -9,29 +9,38 @@ const EVENTS = {
   ALL_MOVIES_DISPLAYED: 'all_movies_displayed',
   DISPLAYED_MOVIES_CHANGED: 'displayed_movies_changed',
   FILTRED_MOVIES_CHANGED: 'filtred_movies_changed',
+  MOVIE_UPDATED: 'movie_updated',
+  SELECTED_FILTER_CHANGED: 'selected_filter_changed',
+  MOVIES_PART_DISPLAYED: 'events.movies_part_displayed'
 };
 
 export default class MoviesModel extends Publisher {
   #moviesApi = new MoviesApi();
   #commentsApi = new CommentsApi();
-  #movies;
+  #moviesMap = new Map();
   #displayedMoviesCount;
+  #defaultDisplayedMoviesCount;
   #displayedMovies = [];
   // key - movieID, value - array of comments
   #comments = new Map();
-  #selectedFilter = null;
+  #selectedFilter = FILTERTYPE.ALL_MOVIES;
   #watchMovies = [];
   #historyMovies = [];
   #favoriteMovies = [];
 
   constructor({ displayedMoviesCount }) {
     super();
-    this.#displayedMoviesCount = displayedMoviesCount;
+    this.#displayedMoviesCount = 0;
+    this.#defaultDisplayedMoviesCount = displayedMoviesCount;
+  }
+
+  get #movies() {
+    return [...this.#moviesMap.values()];
   }
 
   async init() {
     const movies = await this.#moviesApi.getList();
-    this.#movies = movies.map(keysToCamelCase);
+    movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
     this.addDisplayedMovies();
     this.#segregateMoviesByFilters();
   }
@@ -50,21 +59,36 @@ export default class MoviesModel extends Publisher {
   }
 
   async addDisplayedMovies() {
-    const addingMovies = this.#movies.slice(this.#displayedMovies.length, this.#displayedMovies.length + this.#displayedMoviesCount);
-    this.#displayedMovies = [...this.#displayedMovies, ...addingMovies];
+    const newDisplayedMoviesCount = Math.min(this.#displayedMoviesCount + this.#defaultDisplayedMoviesCount, this.filtredMovies.length);
+
+    if (this.#displayedMoviesCount === newDisplayedMoviesCount) {
+      this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
+      return;
+    }
+
+    const addingMovies = this.filtredMovies.slice(this.#displayedMoviesCount, newDisplayedMoviesCount);
+    this.#displayedMoviesCount = newDisplayedMoviesCount;
+
+    if (this.#displayedMoviesCount === this.filtredMovies.length) {
+      this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
+    } else {
+      this._notify(EVENTS.MOVIES_PART_DISPLAYED);
+    }
 
     this._notify(EVENTS.DISPLAYED_MOVIES_ADDED, addingMovies);
-
-    if (this.#displayedMovies.length >= this.#movies.length) {
-      this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
-    }
 
     await Promise.all(addingMovies.map(({id}) => this.loadComments(id)));
   }
 
+  get displayedMovies() {
+    return this.filtredMovies.slice(0, this.#displayedMoviesCount);
+  }
+
   setFilter(filterType) {
     this.#selectedFilter = filterType;
-    this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.filtredMovies);
+    this.#displayedMoviesCount = 0;
+    this._notify(EVENTS.SELECTED_FILTER_CHANGED, this.#selectedFilter);
+    this.addDisplayedMovies();
   }
 
   get filtredMoviesCount() {
@@ -74,6 +98,50 @@ export default class MoviesModel extends Publisher {
       historyCount: this.#historyMovies.length,
     };
   }
+
+  async #switchFilterFlag(movieId, flagName) {
+    const movie = this.#moviesMap.get(movieId);
+    const newMovie = structuredClone(movie);
+    newMovie.userDetails[flagName] = !newMovie.userDetails[flagName];
+    const updatedMovie = await this.#moviesApi.update(movieId, newMovie);
+    this.#moviesMap.set(movieId, updatedMovie);
+    this.#segregateMoviesByFilters();
+    this._notify(EVENTS.MOVIE_UPDATED, updatedMovie);
+  }
+
+  async switcIncludingToWatchList(movieId) {
+    await this.#switchFilterFlag(movieId, 'watchlist');
+
+    if (this.#selectedFilter === FILTERTYPE.WATCHLIST) {
+      this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.displayedMovies);
+    }
+  }
+
+  async switcIncludingToAlreadyWatchedList(movieId) {
+    await this.#switchFilterFlag(movieId, 'alreadyWatched');
+
+    if (this.#selectedFilter === FILTERTYPE.HISTORY) {
+      this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.displayedMovies);
+    }
+  }
+
+  async switcIncludingToFavoriteList(movieId) {
+    await this.#switchFilterFlag(movieId, 'favorite');
+
+    if (this.#selectedFilter === FILTERTYPE.FAVORITES) {
+      this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.displayedMovies);
+    }
+  }
+
+  // async switcIncludingToFavoriteList(movieId) {
+  //   const movie = this.#moviesMap.get(movieId);
+  //   const newMovie = structuredClone(movie);
+  //   newMovie.userDetails.alreadyWatched = !newMovie.userDetails.alreadyWatched;
+  //   const updatedMovie = await this.#moviesApi.update(movieId, newMovie);
+  //   this.#moviesMap.set(movieId, updatedMovie);
+  //   this.#segregateMoviesByFilters();
+  //   this._notify(EVENTS.MOVIE_UPDATED, updatedMovie);
+  // }
 
   #segregateMoviesByFilters() {
     this.#watchMovies = [];
@@ -91,7 +159,8 @@ export default class MoviesModel extends Publisher {
         this.#historyMovies.push(movie);
       }
     }
-    this._notify(EVENTS.FILTRED_MOVIES_CHANGED, this.filtredMoviesCount);
+
+    this._notify(EVENTS.FILTRED_MOVIES_CHANGED, { counts: this.filtredMoviesCount, selectedFilter: this.#selectedFilter });
   }
 
   get filtredMovies() {

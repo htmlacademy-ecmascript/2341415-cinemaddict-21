@@ -11,6 +11,18 @@
   background-color: rgba(255, 255, 255, 0.5);
 }
 
+.container-blocker {
+  display: none;
+  place-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+  min-height: 100%;
+  z-index: 1;
+  background-color: rgba(8, 8, 8, 0.678);
+}
+
 .ui-blocker::before {
   content: "";
   display: block;
@@ -24,6 +36,10 @@
 }
 
 .ui-blocker--on {
+  display: grid;
+}
+
+.container-blocker--on {
   display: grid;
 }
 
