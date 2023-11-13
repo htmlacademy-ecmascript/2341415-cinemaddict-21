@@ -13,7 +13,7 @@ function createFilterTemplate({ counts, selectedFilter }) {
 
 export default class FilterView extends AbstractStatefulView {
 
-  #onFilterClick = null;
+  #handleFilterClick = null;
 
   /**
    *
@@ -25,7 +25,7 @@ export default class FilterView extends AbstractStatefulView {
   constructor(params, { onFilterClick }) {
     super();
     this._setState(params);
-    this.#onFilterClick = onFilterClick;
+    this.#handleFilterClick = onFilterClick;
     this._restoreHandlers();
   }
 
@@ -36,7 +36,7 @@ export default class FilterView extends AbstractStatefulView {
   _restoreHandlers() {
     this.element.addEventListener('click', (evt) => {
       const filterType = evt.target.textContent === 'All movies' ? 'All movies' : evt.target.textContent.split(' ')[0];
-      this.#onFilterClick(filterType);
+      this.#handleFilterClick(filterType);
     });
   }
 

@@ -2,7 +2,7 @@ import Publisher from '../framework/publisher.js';
 import MoviesApi from '../api/movies-api.js';
 import CommentsApi from '../api/comments-api.js';
 import { keysToCamelCase } from '../utils.js';
-import { FILTERTYPE } from '../const.js';
+import { FILTERTYPE, SORTING_ORDER } from '../const.js';
 
 const EVENTS = {
   DISPLAYED_MOVIES_ADDED: 'displayed_movies_added',
@@ -11,7 +11,18 @@ const EVENTS = {
   FILTRED_MOVIES_CHANGED: 'filtred_movies_changed',
   MOVIE_UPDATED: 'movie_updated',
   SELECTED_FILTER_CHANGED: 'selected_filter_changed',
-  MOVIES_PART_DISPLAYED: 'events.movies_part_displayed'
+  MOVIES_PART_DISPLAYED: 'events.movies_part_displayed',
+  SORTING_ORDER_CHANGED: 'sorting_order_changed'
+};
+
+function getRelizeTimestamp(movie) {
+  return new Date(movie.filmInfo.release.date).getTime();
+}
+
+const SORTERS = {
+  [SORTING_ORDER.DEFAULT]: () => 0,
+  [SORTING_ORDER.DATE]: (movieA, movieB) => getRelizeTimestamp(movieA) - getRelizeTimestamp(movieB),
+  [SORTING_ORDER.RATING]: (movieA, movieB) => movieA.filmInfo.totalRating - movieB.filmInfo.totalRating,
 };
 
 export default class MoviesModel extends Publisher {
@@ -27,6 +38,7 @@ export default class MoviesModel extends Publisher {
   #watchMovies = [];
   #historyMovies = [];
   #favoriteMovies = [];
+  #sortingOrder = null;
 
   constructor({ displayedMoviesCount }) {
     super();
@@ -34,15 +46,21 @@ export default class MoviesModel extends Publisher {
     this.#defaultDisplayedMoviesCount = displayedMoviesCount;
   }
 
-  get #movies() {
-    return [...this.#moviesMap.values()];
-  }
-
   async init() {
     const movies = await this.#moviesApi.getList();
     movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
     this.addDisplayedMovies();
     this.#segregateMoviesByFilters();
+  }
+
+  setSortingOrder(sortingOrder) {
+    if (sortingOrder === this.#sortingOrder) {
+      return;
+    }
+
+    this.#sortingOrder = sortingOrder;
+    this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.sortedMovies.slice(0, this.#displayedMoviesCount));
+    this._notify(EVENTS.SORTING_ORDER_CHANGED, this.#sortingOrder);
   }
 
   async loadComments(movieId) {
@@ -59,17 +77,17 @@ export default class MoviesModel extends Publisher {
   }
 
   async addDisplayedMovies() {
-    const newDisplayedMoviesCount = Math.min(this.#displayedMoviesCount + this.#defaultDisplayedMoviesCount, this.filtredMovies.length);
+    const newDisplayedMoviesCount = Math.min(this.#displayedMoviesCount + this.#defaultDisplayedMoviesCount, this.sortedMovies.length);
 
     if (this.#displayedMoviesCount === newDisplayedMoviesCount) {
       this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
       return;
     }
 
-    const addingMovies = this.filtredMovies.slice(this.#displayedMoviesCount, newDisplayedMoviesCount);
+    const addingMovies = this.sortedMovies.slice(this.#displayedMoviesCount, newDisplayedMoviesCount);
     this.#displayedMoviesCount = newDisplayedMoviesCount;
 
-    if (this.#displayedMoviesCount === this.filtredMovies.length) {
+    if (this.#displayedMoviesCount === this.sortedMovies.length) {
       this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
     } else {
       this._notify(EVENTS.MOVIES_PART_DISPLAYED);
@@ -97,6 +115,15 @@ export default class MoviesModel extends Publisher {
       favoriteCount: this.#favoriteMovies.length,
       historyCount: this.#historyMovies.length,
     };
+  }
+
+  get sortedMovies() {
+    const sortMovies = SORTERS[this.#sortingOrder];
+    return this.filtredMovies.sort(sortMovies);
+  }
+
+  get #movies() {
+    return [...this.#moviesMap.values()];
   }
 
   async #switchFilterFlag(movieId, flagName) {
@@ -132,16 +159,6 @@ export default class MoviesModel extends Publisher {
       this._notify(EVENTS.DISPLAYED_MOVIES_CHANGED, this.displayedMovies);
     }
   }
-
-  // async switcIncludingToFavoriteList(movieId) {
-  //   const movie = this.#moviesMap.get(movieId);
-  //   const newMovie = structuredClone(movie);
-  //   newMovie.userDetails.alreadyWatched = !newMovie.userDetails.alreadyWatched;
-  //   const updatedMovie = await this.#moviesApi.update(movieId, newMovie);
-  //   this.#moviesMap.set(movieId, updatedMovie);
-  //   this.#segregateMoviesByFilters();
-  //   this._notify(EVENTS.MOVIE_UPDATED, updatedMovie);
-  // }
 
   #segregateMoviesByFilters() {
     this.#watchMovies = [];

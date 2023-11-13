@@ -12,8 +12,15 @@ const FILTERTYPE = {
   FAVORITES: 'Favorites',
 };
 
+const SORTING_ORDER = {
+  DEFAULT: 'default',
+  DATE: 'date',
+  RATING: 'rating'
+};
+
 export {
   DURATION,
   DISPLAYED_MOVIES_COUNT,
-  FILTERTYPE
+  FILTERTYPE,
+  SORTING_ORDER
 };

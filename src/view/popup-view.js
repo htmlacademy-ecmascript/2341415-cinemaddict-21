@@ -31,7 +31,6 @@ function createCommentTemplate({emotion, comment, author, date}) {
 }
 
 function createPopupTemplate({ movie, comments }) {
-console.log('movie', movie)
   const { filmInfo, userDetails } = movie;
   const { poster, title, totalRating, alternativeTitle, release, duration, description, genre, ageRating, director, writers, actors } = filmInfo;
   const { date, releaseCountry } = release;
@@ -153,12 +152,16 @@ export default class PopupView extends AbstractStatefulView {
   #handlePopupCancel = null;
   #handlePopupEsc = null;
   #handleWatchinglistButtonClick = null;
+  #handleAlreadyWatchedButtonClick = null;
+  #handleFavoriteButtonClick = null;
 
-  constructor({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick }) {
+  constructor({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick, onAlreadyWatchedButtonClick, onFavoriteButtonClick }) {
     super();
     this.#handlePopupCancel = onCancel;
     this.#handlePopupEsc = onEsc;
     this.#handleWatchinglistButtonClick = onWatchinglistButtonClick;
+    this.#handleAlreadyWatchedButtonClick = onAlreadyWatchedButtonClick;
+    this.#handleFavoriteButtonClick = onFavoriteButtonClick;
     this._setState({ movie, comments });
     this._restoreHandlers();
   }
@@ -175,8 +178,8 @@ export default class PopupView extends AbstractStatefulView {
     this.#addOnCancelHandler();
     this.#addOnEscHandler();
     this.#addOnWatchinglistButtonClickHandler();
-    // this.#addonAlreadyWatchedListButtonClickHandler();
-    // this.#addOnFavoriteListButtonClickHandler();
+    this.#addonAlreadyWatchedListButtonClickHandler();
+    this.#addOnFavoriteListButtonClickHandler();
   }
 
   #addOnCancelHandler() {
@@ -198,7 +201,6 @@ export default class PopupView extends AbstractStatefulView {
 
   #addOnWatchinglistButtonClickHandler() {
     const buttonElement = this.element.querySelector('.film-details__control-button--watchlist');
-    console.log('buttonElement:', buttonElement)
 
     buttonElement.addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -206,23 +208,23 @@ export default class PopupView extends AbstractStatefulView {
     });
   }
 
-  // #addonAlreadyWatchedListButtonClickHandler() {
-  //   const buttonElement = this.element.querySelector('.film-card__controls-item--mark-as-watched');
+  #addonAlreadyWatchedListButtonClickHandler() {
+    const buttonElement = this.element.querySelector('.film-details__control-button--watched');
 
-  //   buttonElement.addEventListener('click', (evt) => {
-  //     evt.preventDefault();
-  //     this.#handleAlreadyWatchedListButtonClick(this._state.movie.id);
-  //   });
-  // }
+    buttonElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      this.#handleAlreadyWatchedButtonClick(this._state.movie.id);
+    });
+  }
 
-  // #addOnFavoriteListButtonClickHandler() {
-  //   const buttonElement = this.element.querySelector('.film-card__controls-item--favorite');
+  #addOnFavoriteListButtonClickHandler() {
+    const buttonElement = this.element.querySelector('.film-details__control-button--favorite');
 
-  //   buttonElement.addEventListener('click', (evt) => {
-  //     evt.preventDefault();
-  //     this.#handleFavoriteListButtonClick(this._state.movie.id);
-  //   });
-  // }
+    buttonElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      this.#handleFavoriteButtonClick(this._state.movie.id);
+    });
+  }
 
 
 }
