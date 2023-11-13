@@ -3,6 +3,7 @@ import LogoView from '../view/logo-view.js';
 import SortView from '../view/sort-view.js';
 import {RenderPosition} from '../framework/render.js';
 import { EVENTS } from '../models/movies-model.js';
+import { SORTING_ORDER } from '../const.js';
 
 export default class BoardPresenter {
   #mainContainer = null;
@@ -10,6 +11,7 @@ export default class BoardPresenter {
   #moviesModel = null;
   #showMoreButtonView = null;
   #filterView = null;
+  #sortView = null;
 
   constructor({mainContainer, headerContainer, moviesModel}) {
     this.#mainContainer = mainContainer;
@@ -19,15 +21,25 @@ export default class BoardPresenter {
 
   run() {
     this.#renderLogo();
-    this.#renderSort();
+    this.#createSortView();
+
     this.#moviesModel.addObserver(
       EVENTS.FILTRED_MOVIES_CHANGED,
       (params) => this.#renderFilters(params)
     );
+
     this.#moviesModel.addObserver(
       EVENTS.SELECTED_FILTER_CHANGED,
       (selectedFilter) => this.#filterView.updateElement({ selectedFilter })
     );
+
+
+    this.#moviesModel.addObserver(
+      EVENTS.SORTING_ORDER_CHANGED,
+      (selectedSortingOrder) => this.#sortView.updateElement({ selectedSortingOrder })
+    );
+
+    this.#renderSort();
   }
 
   #renderFilters(params) {
@@ -36,6 +48,14 @@ export default class BoardPresenter {
       this.#mainContainer.add(this.#filterView, RenderPosition.BEFOREBEGIN);
     }
     this.#filterView.updateElement(params);
+  }
+
+  #renderSort() {
+    if(!this.#sortView) {
+      this.#sortView = this.#createSortView();
+      this.#mainContainer.add(this.#sortView, RenderPosition.BEFOREBEGIN);
+    }
+    this.#sortView.updateElement();
   }
 
   #createFilterView(params) {
@@ -53,7 +73,9 @@ export default class BoardPresenter {
     this.#headerElement.add(new LogoView());
   }
 
-  #renderSort() {
-    this.#mainContainer.add(new SortView(), RenderPosition.BEFOREBEGIN);
+  #createSortView() {
+    return new SortView(SORTING_ORDER.DEFAULT, { onSortingClick: (sortingOrder) => {
+      this.#moviesModel.setSortingOrder(sortingOrder);
+    } });
   }
 }

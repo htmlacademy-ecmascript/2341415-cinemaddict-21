@@ -40,7 +40,15 @@ export default class PopupPresenter {
       this.moviesModel.switcIncludingToWatchList(movieId);
     };
 
-    this.#popupView = new PopupView({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick });
+    const onAlreadyWatchedButtonClick = (movieId) => {
+      this.moviesModel.switcIncludingToAlreadyWatchedList(movieId);
+    };
+
+    const onFavoriteButtonClick = (movieId) => {
+      this.moviesModel.switcIncludingToFavoriteList(movieId);
+    };
+
+    this.#popupView = new PopupView({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick, onAlreadyWatchedButtonClick, onFavoriteButtonClick });
     this.#popupContainer.add(this.#popupView);
   }
 
