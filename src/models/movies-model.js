@@ -12,7 +12,8 @@ const EVENTS = {
   MOVIE_UPDATED: 'movie_updated',
   SELECTED_FILTER_CHANGED: 'selected_filter_changed',
   MOVIES_PART_DISPLAYED: 'events.movies_part_displayed',
-  SORTING_ORDER_CHANGED: 'sorting_order_changed'
+  SORTING_ORDER_CHANGED: 'sorting_order_changed',
+  MODEL_INITIALIZED: 'model_initialized'
 };
 
 function getRelizeTimestamp(movie) {
@@ -51,6 +52,7 @@ export default class MoviesModel extends Publisher {
     movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
     this.addDisplayedMovies();
     this.#segregateMoviesByFilters();
+    this._notify(EVENTS.MODEL_INITIALIZED);
   }
 
   setSortingOrder(sortingOrder) {
@@ -120,6 +122,10 @@ export default class MoviesModel extends Publisher {
   get sortedMovies() {
     const sortMovies = SORTERS[this.#sortingOrder];
     return this.filtredMovies.sort(sortMovies);
+  }
+
+  get moviesLength() {
+    return this.#moviesMap.size;
   }
 
   get #movies() {

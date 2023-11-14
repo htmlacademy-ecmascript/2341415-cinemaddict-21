@@ -10,13 +10,15 @@ const mainElement = document.querySelector('.films-list__container');
 const headerElement = document.querySelector('.header');
 const popupElement = document.querySelector('.film-details');
 const mainContainer = new ContainerView(mainElement);
+const footerElement = document.querySelector('.footer');
 
 const moviesModel = new MoviesModel({ displayedMoviesCount: DISPLAYED_MOVIES_COUNT });
 
 const boardPresenter = new BoardPresenter({
   moviesModel,
   mainContainer,
-  headerContainer: new ContainerView(headerElement)
+  headerContainer: new ContainerView(headerElement),
+  footerContainer: new ContainerView(footerElement)
 });
 
 const showMoreButtonPresenter = new ShowMoreButtonPresenter({
