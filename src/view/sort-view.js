@@ -1,9 +1,9 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import { SORTING_ORDER } from '../const.js';
 
-function createSortTemplate({ selectedSortingOrder }) {
+function createSortTemplate({ selectedSortingOrder, isVisible }) {
 
-  return `<ul class="sort">
+  return `<ul class="sort${isVisible ? '' : ' hidden'}">
   <li><a data-sortingorder="${SORTING_ORDER.DEFAULT}" href="#" class="sort__button ${SORTING_ORDER.DEFAULT === selectedSortingOrder ? ' sort__button--active' : ''}">Sort by default</a></li>
   <li><a data-sortingorder="${SORTING_ORDER.DATE}" href="#" class="sort__button ${SORTING_ORDER.DATE === selectedSortingOrder ? ' sort__button--active' : ''}">Sort by date</a></li>
   <li><a data-sortingorder="${SORTING_ORDER.RATING}" href="#" class="sort__button ${SORTING_ORDER.RATING === selectedSortingOrder ? ' sort__button--active' : ''}">Sort by rating</a></li>
@@ -14,11 +14,11 @@ export default class SortView extends AbstractStatefulView {
 
   #handleSortingClick = null;
 
-  constructor(selectedSortingOrder, listeners) {
+  constructor({ selectedSortingOrder, isVisible }, listeners) {
     super();
     const { onSortingClick } = listeners;
     this.#handleSortingClick = onSortingClick;
-    this._setState({ selectedSortingOrder });
+    this._setState({ selectedSortingOrder, isVisible });
     this._restoreHandlers();
   }
 

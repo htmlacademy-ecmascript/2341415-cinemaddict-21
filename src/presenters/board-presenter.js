@@ -1,45 +1,58 @@
 import FilterView from '../view/filter-view.js';
 import LogoView from '../view/logo-view.js';
 import SortView from '../view/sort-view.js';
-import {RenderPosition} from '../framework/render.js';
+import { RenderPosition } from '../framework/render.js';
 import { EVENTS } from '../models/movies-model.js';
 import { SORTING_ORDER } from '../const.js';
+import FilmCountView from '../view/film-count-view.js';
 
 export default class BoardPresenter {
-  #mainContainer = null;
   #headerElement = null;
   #moviesModel = null;
-  #showMoreButtonView = null;
   #filterView = null;
   #sortView = null;
+  #logoView = null;
+  #footerContainer = null;
+  #mainContainer = null;
 
-  constructor({mainContainer, headerContainer, moviesModel}) {
+  constructor({headerContainer, moviesModel, footerContainer, mainContainer}) {
     this.#mainContainer = mainContainer;
     this.#headerElement = headerContainer;
     this.#moviesModel = moviesModel;
+    this.#footerContainer = footerContainer;
   }
 
   run() {
     this.#renderLogo();
-    this.#createSortView();
+    this.#moviesModel.addObserver(
+      EVENTS.MODEL_INITIALIZED,
+      () => {
+        this.#renderFilmCount();
+        this.#renderSort();
+      }
+    );
 
     this.#moviesModel.addObserver(
       EVENTS.FILTRED_MOVIES_CHANGED,
-      (params) => this.#renderFilters(params)
+      (params) => {
+        const { counts } = params;
+        this.#logoView.updateElement({ watchedMoviesCount: counts.watchlistCount });
+        this.#renderFilters(params);
+      }
     );
 
     this.#moviesModel.addObserver(
       EVENTS.SELECTED_FILTER_CHANGED,
-      (selectedFilter) => this.#filterView.updateElement({ selectedFilter })
+      (selectedFilter) => {
+        this.#filterView.updateElement({ selectedFilter });
+        this.#sortView.updateElement({ isVisible: !this.#moviesModel.isFiltredMoviesEmpty });
+      }
     );
-
 
     this.#moviesModel.addObserver(
       EVENTS.SORTING_ORDER_CHANGED,
-      (selectedSortingOrder) => this.#sortView.updateElement({ selectedSortingOrder })
+      (selectedSortingOrder) => this.#sortView.updateElement({ selectedSortingOrder, isVisible: !this.#moviesModel.isFiltredMoviesEmpty })
     );
-
-    this.#renderSort();
   }
 
   #renderFilters(params) {
@@ -51,11 +64,13 @@ export default class BoardPresenter {
   }
 
   #renderSort() {
-    if(!this.#sortView) {
-      this.#sortView = this.#createSortView();
-      this.#mainContainer.add(this.#sortView, RenderPosition.BEFOREBEGIN);
-    }
-    this.#sortView.updateElement();
+    this.#sortView = this.#createSortView();
+    this.#mainContainer.add(this.#sortView, RenderPosition.AFTERBEGIN);
+  }
+
+  #renderFilmCount() {
+    const filmCount = this.#moviesModel.moviesLength;
+    this.#footerContainer.add(new FilmCountView(filmCount));
   }
 
   #createFilterView(params) {
@@ -69,13 +84,22 @@ export default class BoardPresenter {
     );
   }
 
-  #renderLogo() {
-    this.#headerElement.add(new LogoView());
+  #renderLogo(watchedMoviesCount = 0) {
+    this.#logoView = new LogoView({ watchedMoviesCount });
+    this.#headerElement.add(this.#logoView);
   }
 
   #createSortView() {
-    return new SortView(SORTING_ORDER.DEFAULT, { onSortingClick: (sortingOrder) => {
-      this.#moviesModel.setSortingOrder(sortingOrder);
-    } });
+    return new SortView(
+      {
+        selectedSortingOrder: SORTING_ORDER.DEFAULT,
+        isVisible: !this.#moviesModel.isFiltredMoviesEmpty
+      },
+      {
+        onSortingClick: (sortingOrder) => {
+          this.#moviesModel.setSortingOrder(sortingOrder);
+        }
+      }
+    );
   }
 }

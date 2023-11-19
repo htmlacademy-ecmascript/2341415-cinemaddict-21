@@ -12,7 +12,10 @@ const EVENTS = {
   MOVIE_UPDATED: 'movie_updated',
   SELECTED_FILTER_CHANGED: 'selected_filter_changed',
   MOVIES_PART_DISPLAYED: 'events.movies_part_displayed',
-  SORTING_ORDER_CHANGED: 'sorting_order_changed'
+  SORTING_ORDER_CHANGED: 'sorting_order_changed',
+  MODEL_INITIALIZED: 'model_initialized',
+  MOVIE_COMMENT_ADDED: 'movie_comment_added',
+  MOVIE_COMMENT_DELETED: 'movie_comment_deleted'
 };
 
 function getRelizeTimestamp(movie) {
@@ -21,8 +24,8 @@ function getRelizeTimestamp(movie) {
 
 const SORTERS = {
   [SORTING_ORDER.DEFAULT]: () => 0,
-  [SORTING_ORDER.DATE]: (movieA, movieB) => getRelizeTimestamp(movieA) - getRelizeTimestamp(movieB),
-  [SORTING_ORDER.RATING]: (movieA, movieB) => movieA.filmInfo.totalRating - movieB.filmInfo.totalRating,
+  [SORTING_ORDER.DATE]: (movieA, movieB) => getRelizeTimestamp(movieB) - getRelizeTimestamp(movieA),
+  [SORTING_ORDER.RATING]: (movieA, movieB) => movieB.filmInfo.totalRating - movieA.filmInfo.totalRating,
 };
 
 export default class MoviesModel extends Publisher {
@@ -51,6 +54,7 @@ export default class MoviesModel extends Publisher {
     movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
     this.addDisplayedMovies();
     this.#segregateMoviesByFilters();
+    this._notify(EVENTS.MODEL_INITIALIZED);
   }
 
   setSortingOrder(sortingOrder) {
@@ -66,6 +70,28 @@ export default class MoviesModel extends Publisher {
   async loadComments(movieId) {
     const comments = await this.#commentsApi.getList(movieId);
     this.#comments.set(movieId, comments);
+  }
+
+  async addComment(movieId, comment) {
+    const { movie, comments } = await this.#commentsApi.addComment(movieId, comment);
+    this.#moviesMap.set(movieId, movie);
+    this.#comments.set(movieId, comments);
+    this._notify(EVENTS.MOVIE_UPDATED, movie);
+    this._notify(EVENTS.MOVIE_COMMENT_ADDED, { movie, comments });
+  }
+
+  async deleteComment({ commentId, movieId }) {
+    await this.#commentsApi.deleteComment(commentId);
+
+    const movie = this.#moviesMap.get(movieId);
+    movie.comments = movie.comments.filter((id) => id !== commentId);
+
+    const comments = this.#comments.get(movieId);
+    const newComments = comments.filter((comment) => comment.id !== commentId);
+    this.#comments.set(movieId, newComments);
+
+    this._notify(EVENTS.MOVIE_UPDATED, movie);
+    this._notify(EVENTS.MOVIE_COMMENT_DELETED,{ movie, comments: newComments });
   }
 
   async getComments(movieId) {
@@ -102,9 +128,14 @@ export default class MoviesModel extends Publisher {
     return this.filtredMovies.slice(0, this.#displayedMoviesCount);
   }
 
+  get isFiltredMoviesEmpty() {
+    return this.filtredMovies.length === 0;
+  }
+
   setFilter(filterType) {
     this.#selectedFilter = filterType;
     this.#displayedMoviesCount = 0;
+    this.setSortingOrder(SORTING_ORDER.DEFAULT);
     this._notify(EVENTS.SELECTED_FILTER_CHANGED, this.#selectedFilter);
     this.addDisplayedMovies();
   }
@@ -120,6 +151,14 @@ export default class MoviesModel extends Publisher {
   get sortedMovies() {
     const sortMovies = SORTERS[this.#sortingOrder];
     return this.filtredMovies.sort(sortMovies);
+  }
+
+  get moviesLength() {
+    return this.#moviesMap.size;
+  }
+
+  get selectedFilter() {
+    return this.#selectedFilter;
   }
 
   get #movies() {
