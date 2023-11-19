@@ -18,6 +18,18 @@ export default class PopupPresenter {
         this.#popupView.updateElement({ movie: updatedMovie });
       }
     });
+
+    this.moviesModel.addObserver(EVENTS.MOVIE_COMMENT_ADDED, ({ movie, comments }) => {
+      if (this.#popupView?.movieId === movie.id) {
+        this.#popupView.update({ movie, comments });
+      }
+    });
+
+    this.moviesModel.addObserver(EVENTS.MOVIE_COMMENT_DELETED, ({ movie, comments }) => {
+      if (this.#popupView?.movieId === movie.id) {
+        this.#popupView.update({ movie, comments });
+      }
+    });
   }
 
   renderPopup({ movie, comments, onClose }) {
@@ -48,7 +60,23 @@ export default class PopupPresenter {
       this.moviesModel.switcIncludingToFavoriteList(movieId);
     };
 
-    this.#popupView = new PopupView({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick, onAlreadyWatchedButtonClick, onFavoriteButtonClick });
+    const onCommentAddingClick = (movieId, comment) => {
+      this.moviesModel.addComment(movieId, comment);
+    };
+
+    const onCommentDeleteClick = (params) => {
+      this.moviesModel.deleteComment(params);
+    };
+
+    this.#popupView = new PopupView({ movie, comments }, {
+      onCancel,
+      onEsc,
+      onWatchinglistButtonClick,
+      onAlreadyWatchedButtonClick,
+      onFavoriteButtonClick,
+      onCommentAddingClick,
+      onCommentDeleteClick
+    });
     this.#popupContainer.add(this.#popupView);
   }
 

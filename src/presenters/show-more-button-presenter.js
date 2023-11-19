@@ -3,12 +3,12 @@ import ShowMoreButtonView from '../view/show-more-button-view.js';
 import { EVENTS } from '../models/movies-model.js';
 
 export default class ShowMoreButtonPresenter {
-  #mainContainer = null;
+  #movieCardsContainer = null;
   #moviesModel = null;
   #showMoreButtonView = null;
 
-  constructor({mainContainer, moviesModel}) {
-    this.#mainContainer = mainContainer;
+  constructor({movieCardsContainer, moviesModel}) {
+    this.#movieCardsContainer = movieCardsContainer;
     this.#moviesModel = moviesModel;
   }
 
@@ -36,6 +36,6 @@ export default class ShowMoreButtonPresenter {
     };
     const showMoreButtonView = new ShowMoreButtonView({ onClick });
     this.#showMoreButtonView = showMoreButtonView;
-    this.#mainContainer.add(this.#showMoreButtonView, RenderPosition.AFTEREND);
+    this.#movieCardsContainer.add(this.#showMoreButtonView, RenderPosition.AFTEREND);
   }
 }

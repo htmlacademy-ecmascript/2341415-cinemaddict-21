@@ -8,9 +8,9 @@ export default class MovieCardsPresenter {
   moviesModel = null;
   #movieViewMap = new Map();
 
-  constructor({ mainContainer, popupPresenter, moviesModel }) {
+  constructor({ movieCardsContainer, popupPresenter, moviesModel }) {
     this.#popupPresenter = popupPresenter;
-    this.#cardsContainer = mainContainer;
+    this.#cardsContainer = movieCardsContainer;
     this.moviesModel = moviesModel;
 
     this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_CHANGED, (displayedMovies) => this.onDisplayedMoviesChanged(displayedMovies));
@@ -28,7 +28,7 @@ export default class MovieCardsPresenter {
 
   onDisplayedMoviesAdded(movies) {
     if (!movies.length) {
-      this.#cardsContainer.add(new NoMoviesView());
+      this.#cardsContainer.add(new NoMoviesView(this.moviesModel.selectedFilter));
     }
     movies.forEach((movie) => this.#renderMovieCards(movie));
   }
