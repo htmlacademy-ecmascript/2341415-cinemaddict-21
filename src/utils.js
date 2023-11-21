@@ -54,10 +54,16 @@ function showOverflow(el) {
   el.classList.remove('hide-overflow');
 }
 
+function wait(timeout) {
+  return new Promise((res) => setTimeout(res, timeout));
+}
+
+
 export {
   keysToCamelCase,
   keysToSnakeCase,
   getDurationString,
   hideOverflow,
-  showOverflow
+  showOverflow,
+  wait
 };
