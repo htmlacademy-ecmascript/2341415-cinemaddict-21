@@ -1,13 +1,25 @@
 import PopupView from '../view/popup-view.js';
 import { hideOverflow, showOverflow } from '../utils.js';
 import { EVENTS } from '../models/movies-model.js';
+import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 
 const body = document.querySelector('body');
+
+const TimeLimit = {
+  LOWER_LIMIT: 0,
+  UPPER_LIMIT: 0,
+};
+
 
 export default class PopupPresenter {
   #popupContainer = null;
   moviesModel = null;
   #popupView = null;
+
+  uiBlocker = new UiBlocker({
+    lowerLimit: TimeLimit.LOWER_LIMIT,
+    upperLimit: TimeLimit.UPPER_LIMIT
+  });
 
   constructor({ popupContainer, moviesModel }) {
     this.#popupContainer = popupContainer;
@@ -16,18 +28,19 @@ export default class PopupPresenter {
     this.moviesModel.addObserver(EVENTS.MOVIE_UPDATED, (updatedMovie) => {
       if (this.#popupView?.movieId === updatedMovie.id) {
         this.#popupView.updateElement({ movie: updatedMovie });
+        this.uiBlocker.unblock();
       }
     });
 
     this.moviesModel.addObserver(EVENTS.MOVIE_COMMENT_ADDED, ({ movie, comments }) => {
       if (this.#popupView?.movieId === movie.id) {
-        this.#popupView.update({ movie, comments });
+        this.#updatePopup({ movie, comments });
       }
     });
 
     this.moviesModel.addObserver(EVENTS.MOVIE_COMMENT_DELETED, ({ movie, comments }) => {
       if (this.#popupView?.movieId === movie.id) {
-        this.#popupView.update({ movie, comments });
+        this.#updatePopup({ movie, comments });
       }
     });
   }
@@ -49,23 +62,37 @@ export default class PopupPresenter {
     hideOverflow(body);
 
     const onWatchinglistButtonClick = (movieId) => {
-      this.moviesModel.switcIncludingToWatchList(movieId);
+      this.uiBlocker.block();
+      this.moviesModel.switcIncludingToWatchList(movieId).catch((err) => {
+        this.#handleError(err);
+        this.#popupView.shakePopupFilters(() => this.#popupView.updateElement({}));
+      });
     };
 
     const onAlreadyWatchedButtonClick = (movieId) => {
-      this.moviesModel.switcIncludingToAlreadyWatchedList(movieId);
+      this.uiBlocker.block();
+      this.moviesModel.switcIncludingToAlreadyWatchedList(movieId).catch((err) => this.#handleError(err));
     };
 
     const onFavoriteButtonClick = (movieId) => {
-      this.moviesModel.switcIncludingToFavoriteList(movieId);
+      this.uiBlocker.block();
+      this.moviesModel.switcIncludingToFavoriteList(movieId).catch((err) => this.#handleError(err));
     };
 
     const onCommentAddingClick = (movieId, comment) => {
-      this.moviesModel.addComment(movieId, comment);
+      this.uiBlocker.block();
+      this.moviesModel.addComment(movieId, comment).catch((err) => {
+        this.uiBlocker.unblock();
+        this.#popupView.shakeAddingComment(() => this.#popupView.updateElement({}));
+      });
     };
 
     const onCommentDeleteClick = (params) => {
-      this.moviesModel.deleteComment(params);
+      this.uiBlocker.block();
+      this.moviesModel.deleteComment(params).catch((err) => {
+        this.uiBlocker.unblock();
+        this.#popupView.shakeComments(() => this.#popupView.updateElement({}));
+      });
     };
 
     this.#popupView = new PopupView({ movie, comments }, {
@@ -77,7 +104,17 @@ export default class PopupPresenter {
       onCommentAddingClick,
       onCommentDeleteClick
     });
+
     this.#popupContainer.add(this.#popupView);
   }
 
+  #handleError() {
+    this.uiBlocker.unblock();
+    this.#popupView.shake(() => this.#popupView.updateElement({}));
+  }
+
+  #updatePopup(params) {
+    this.#popupView.update(params);
+    this.uiBlocker.unblock();
+  }
 }
