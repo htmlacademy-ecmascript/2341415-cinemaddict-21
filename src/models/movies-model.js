@@ -15,7 +15,8 @@ const EVENTS = {
   SORTING_ORDER_CHANGED: 'sorting_order_changed',
   MODEL_INITIALIZED: 'model_initialized',
   MOVIE_COMMENT_ADDED: 'movie_comment_added',
-  MOVIE_COMMENT_DELETED: 'movie_comment_deleted'
+  MOVIE_COMMENT_DELETED: 'movie_comment_deleted',
+  MOVIES_LOADED: 'movies_loaded'
 };
 
 function getRelizeTimestamp(movie) {
@@ -51,6 +52,7 @@ export default class MoviesModel extends Publisher {
 
   async init() {
     const movies = await this.#moviesApi.getList();
+    this._notify(EVENTS.MOVIES_LOADED);
     movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
     this.addDisplayedMovies();
     this.#segregateMoviesByFilters();
@@ -105,7 +107,7 @@ export default class MoviesModel extends Publisher {
   async addDisplayedMovies() {
     const newDisplayedMoviesCount = Math.min(this.#displayedMoviesCount + this.#defaultDisplayedMoviesCount, this.sortedMovies.length);
 
-    if (this.#displayedMoviesCount === newDisplayedMoviesCount) {
+    if (this.#displayedMoviesCount === newDisplayedMoviesCount && this.#displayedMoviesCount !== 0) {
       this._notify(EVENTS.ALL_MOVIES_DISPLAYED);
       return;
     }
