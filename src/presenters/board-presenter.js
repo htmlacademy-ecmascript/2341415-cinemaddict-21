@@ -36,7 +36,7 @@ export default class BoardPresenter {
       EVENTS.FILTRED_MOVIES_CHANGED,
       (params) => {
         const { counts } = params;
-        this.#logoView.updateElement({ watchedMoviesCount: counts.watchlistCount });
+        this.#logoView.updateElement({ historyMoviesCount: counts.historyCount });
         this.#renderFilters(params);
       }
     );
@@ -84,8 +84,8 @@ export default class BoardPresenter {
     );
   }
 
-  #renderLogo(watchedMoviesCount = 0) {
-    this.#logoView = new LogoView({ watchedMoviesCount });
+  #renderLogo(historyMoviesCount = 0) {
+    this.#logoView = new LogoView({ historyMoviesCount });
     this.#headerElement.add(this.#logoView);
   }
 

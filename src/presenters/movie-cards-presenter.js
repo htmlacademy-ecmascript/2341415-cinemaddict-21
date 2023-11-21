@@ -2,6 +2,7 @@ import MovieCardView from '../view/movie-card-view';
 import NoMoviesView from '../view/no-movies-view.js';
 import { EVENTS } from '../models/movies-model';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
+import PreLoadMoviesMessageView from '../view/pre-load-movies-view.js';
 
 const TimeLimit = {
   LOWER_LIMIT: 0,
@@ -24,6 +25,8 @@ export default class MovieCardsPresenter {
     this.#cardsContainer = movieCardsContainer;
     this.moviesModel = moviesModel;
 
+    this.#cardsContainer.add(new PreLoadMoviesMessageView());
+
     this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_CHANGED, (displayedMovies) => {
       this.onDisplayedMoviesChanged(displayedMovies);
     });
@@ -36,6 +39,11 @@ export default class MovieCardsPresenter {
 
     this.moviesModel.addObserver(
       EVENTS.SELECTED_FILTER_CHANGED,
+      () => this.#cardsContainer.clear()
+    );
+
+    this.moviesModel.addObserver(
+      EVENTS.MOVIES_LOADED,
       () => this.#cardsContainer.clear()
     );
   }
