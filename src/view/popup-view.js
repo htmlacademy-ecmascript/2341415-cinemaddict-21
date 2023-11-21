@@ -236,6 +236,22 @@ export default class PopupView extends AbstractStatefulView {
     this.#addOnCommentDeleteHandler();
   }
 
+  shakeComments(callback) {
+    const commentContainer = document.querySelector('.film-details__bottom-container');
+    this.shakeElement(commentContainer, callback);
+  }
+
+  shakeAddingComment(callback) {
+    const addingCommentContainer = document.querySelector('.film-details__new-comment');
+    this.shakeElement(addingCommentContainer, callback);
+    this._setState({ selectedEmoji: null });
+  }
+
+  shakePopupFilters(callback) {
+    const popupFiltersContainer = document.querySelector('.film-details__controls');
+    this.shakeElement(popupFiltersContainer, callback);
+  }
+
   #addOnCancelHandler() {
     const closeButton = this.element.querySelector('.film-details__close-btn');
     closeButton.addEventListener('click', (evt) => {
@@ -270,6 +286,7 @@ export default class PopupView extends AbstractStatefulView {
 
     commentListElement.addEventListener('click', (evt) => {
       if(evt.target.tagName === 'BUTTON') {
+        evt.target.textContent = 'Deleting...';
         this.#handleCommentDeleteClick({ commentId: evt.target.dataset.commentid, movieId: this._state.movie.id});
       }
     });
