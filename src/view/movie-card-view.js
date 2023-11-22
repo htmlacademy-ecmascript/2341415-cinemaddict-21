@@ -8,6 +8,7 @@ function createMovieCardTemplate(movie) {
   const { watchlist, alreadyWatched, favorite } = userDetails;
   const { poster, alternativeTitle, totalRating, release, duration, description, genre } = filmInfo;
   const { date } = release;
+  const descriptionCut = description.slice(0, 139).concat('...');
 
   return `
       <article class="film-card">
@@ -20,7 +21,7 @@ function createMovieCardTemplate(movie) {
             <span class="film-card__genre">${genre}</span>
           </p>
           <img src="./${poster}" alt="" class="film-card__poster">
-          <p class="film-card__description">${description}</p>
+          <p class="film-card__description">${description.length > 139 ? descriptionCut : description}</p>
           <span class="film-card__comments">${comments.length} comments</span>
         </a>
         <div class="film-card__controls">
@@ -59,11 +60,13 @@ export default class MovieCardView extends AbstractStatefulView {
   }
 
   #addOnClickHandler() {
-    const imgElement = this.element.querySelector('.film-card__poster');
 
-    imgElement.addEventListener('click', (evt) => {
+    this.element.addEventListener('click', (evt) => {
       evt.preventDefault();
-      this.#handleClick(this._state.movie);
+
+      if (evt.target.tagName !== 'BUTTON') {
+        this.#handleClick(this._state.movie);
+      }
     });
   }
 

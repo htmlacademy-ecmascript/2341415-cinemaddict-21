@@ -10,7 +10,6 @@ const TimeLimit = {
   UPPER_LIMIT: 0,
 };
 
-
 export default class PopupPresenter {
   #popupContainer = null;
   moviesModel = null;
@@ -24,7 +23,9 @@ export default class PopupPresenter {
   constructor({ popupContainer, moviesModel }) {
     this.#popupContainer = popupContainer;
     this.moviesModel = moviesModel;
+  }
 
+  init() {
     this.moviesModel.addObserver(EVENTS.MOVIE_UPDATED, (updatedMovie) => {
       if (this.#popupView?.movieId === updatedMovie.id) {
         this.#popupView.updateElement({ movie: updatedMovie });
@@ -45,17 +46,15 @@ export default class PopupPresenter {
     });
   }
 
-  renderPopup({ movie, comments, onClose }) {
+  renderPopup({ movie, comments }) {
     const onCancel = () => {
-      this.#popupContainer.clear();
+      this.#closePopup();
       showOverflow(body);
-      onClose();
     };
 
     const onEsc = () => {
-      this.#popupContainer.clear();
+      this.#closePopup();
       showOverflow(body);
-      onClose();
     };
 
     this.#popupContainer.clear();
@@ -81,7 +80,7 @@ export default class PopupPresenter {
 
     const onCommentAddingClick = (movieId, comment) => {
       this.uiBlocker.block();
-      this.moviesModel.addComment(movieId, comment).catch((err) => {
+      this.moviesModel.addComment(movieId, comment).catch(() => {
         this.uiBlocker.unblock();
         this.#popupView.shakeAddingComment(() => this.#popupView.updateElement({}));
       });
@@ -89,7 +88,7 @@ export default class PopupPresenter {
 
     const onCommentDeleteClick = (params) => {
       this.uiBlocker.block();
-      this.moviesModel.deleteComment(params).catch((err) => {
+      this.moviesModel.deleteComment(params).catch(() => {
         this.uiBlocker.unblock();
         this.#popupView.shakeComments(() => this.#popupView.updateElement({}));
       });
@@ -106,6 +105,11 @@ export default class PopupPresenter {
     });
 
     this.#popupContainer.add(this.#popupView);
+  }
+
+  #closePopup() {
+    this.#popupView = null;
+    this.#popupContainer.clear();
   }
 
   #handleError() {

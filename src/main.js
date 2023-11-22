@@ -1,5 +1,5 @@
 import ContainerView from './framework/view/container-view.js';
-import MoviesModel, { EVENTS } from './models/movies-model.js';
+import MoviesModel from './models/movies-model.js';
 import BoardPresenter from './presenters/board-presenter.js';
 import PopupPresenter from './presenters/popup-presenter.js';
 import MovieCardsPresenter from './presenters/movie-cards-presenter.js';
@@ -40,9 +40,9 @@ const movieCardsPresenter = new MovieCardsPresenter({
   moviesModel
 });
 
-boardPresenter.run();
-showMoreButtonPresenter.run();
-moviesModel
-  .addObserver(EVENTS.DISPLAYED_MOVIES_ADDED, (movies) => movieCardsPresenter.onDisplayedMoviesAdded(movies))
-  .init();
+movieCardsPresenter.init();
+popupPresenter.init();
+boardPresenter.init();
+showMoreButtonPresenter.init();
+moviesModel.init();
 
