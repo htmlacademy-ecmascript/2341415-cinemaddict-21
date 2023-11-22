@@ -244,7 +244,8 @@ export default class PopupView extends AbstractStatefulView {
   shakeAddingComment(callback) {
     const addingCommentContainer = document.querySelector('.film-details__new-comment');
     this.shakeElement(addingCommentContainer, callback);
-    this._setState({ selectedEmoji: null });
+    // this.#resetCommentText();
+    // this._setState({ selectedEmoji: null });
   }
 
   shakePopupFilters(callback) {
@@ -274,6 +275,7 @@ export default class PopupView extends AbstractStatefulView {
 
   #addComment() {
     const comment = this.#getCommentText();
+    this._setState({ newCommentText: comment });
     const emotion = this._state.selectedEmoji;
 
     if (comment && emotion) {
@@ -336,6 +338,7 @@ export default class PopupView extends AbstractStatefulView {
 
   #handleEmojiClick() {
     const emojiElement = this.element.querySelector('.film-details__emoji-list');
+
     emojiElement.addEventListener('change', (evt) => {
       const selectedEmoji = evt.target.value;
       this.updateElement({ selectedEmoji, newCommentText: this.#getCommentText() });
