@@ -35,8 +35,6 @@ export default class MoviesModel extends Publisher {
   #moviesMap = new Map();
   #displayedMoviesCount;
   #defaultDisplayedMoviesCount;
-  #displayedMovies = [];
-  // key - movieID, value - array of comments
   #comments = new Map();
   #selectedFilter = FILTERTYPE.ALL_MOVIES;
   #watchMovies = [];

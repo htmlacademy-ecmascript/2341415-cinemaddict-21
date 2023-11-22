@@ -12,7 +12,7 @@ export default class ShowMoreButtonPresenter {
     this.#moviesModel = moviesModel;
   }
 
-  run() {
+  init() {
     this.#renderShowMoreButton();
 
     this.#moviesModel.addObserver(

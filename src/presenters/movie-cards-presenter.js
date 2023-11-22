@@ -15,7 +15,7 @@ export default class MovieCardsPresenter {
   moviesModel = null;
   #movieViewMap = new Map();
 
-  uiBlocker = new UiBlocker({
+  #uiBlocker = new UiBlocker({
     lowerLimit: TimeLimit.LOWER_LIMIT,
     upperLimit: TimeLimit.UPPER_LIMIT
   });
@@ -24,8 +24,12 @@ export default class MovieCardsPresenter {
     this.#popupPresenter = popupPresenter;
     this.#cardsContainer = movieCardsContainer;
     this.moviesModel = moviesModel;
+  }
 
+  init() {
     this.#cardsContainer.add(new PreLoadMoviesMessageView());
+
+    this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_ADDED, (movies) => this.#onDisplayedMoviesAdded(movies));
 
     this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_CHANGED, (displayedMovies) => {
       this.onDisplayedMoviesChanged(displayedMovies);
@@ -34,7 +38,7 @@ export default class MovieCardsPresenter {
     this.moviesModel.addObserver(EVENTS.MOVIE_UPDATED, (updatedMovie) => {
       const movieView = this.#movieViewMap.get(updatedMovie.id);
       movieView.updateElement({ movie: updatedMovie });
-      this.uiBlocker.unblock();
+      this.#uiBlocker.unblock();
     });
 
     this.moviesModel.addObserver(
@@ -48,7 +52,7 @@ export default class MovieCardsPresenter {
     );
   }
 
-  onDisplayedMoviesAdded(movies) {
+  #onDisplayedMoviesAdded(movies) {
     if (!movies.length) {
       this.#cardsContainer.add(new NoMoviesView(this.moviesModel.selectedFilter));
     }
@@ -57,25 +61,24 @@ export default class MovieCardsPresenter {
 
   onDisplayedMoviesChanged(displayedMovies) {
     this.#cardsContainer.clear();
-    this.onDisplayedMoviesAdded(displayedMovies);
+    this.#onDisplayedMoviesAdded(displayedMovies);
   }
 
   #renderMovieCards(movie) {
     const onClick = async (theMovie) => {
       const comments = await this.moviesModel.getComments(theMovie.id);
-      this.#cardsContainer.block();
-      this.#popupPresenter.renderPopup({ movie: theMovie, comments, onClose: () => this.#cardsContainer.unblock() });
+      this.#popupPresenter.renderPopup({ movie: theMovie, comments });
     };
     const onWatchinglistButtonClick = (movieId) => {
-      this.uiBlocker.block();
+      this.#uiBlocker.block();
       this.moviesModel.switcIncludingToWatchList(movieId).catch((err) => this.#handleError(movieId, err));
     };
     const onAlreadyWatchedlistButtonClick = (movieId) => {
-      this.uiBlocker.block();
+      this.#uiBlocker.block();
       this.moviesModel.switcIncludingToAlreadyWatchedList(movieId).catch((err) => this.#handleError(movieId, err));
     };
     const onFavoriteListButtonClick = (movieId) => {
-      this.uiBlocker.block();
+      this.#uiBlocker.block();
       this.moviesModel.switcIncludingToFavoriteList(movieId).catch((err) => this.#handleError(movieId, err));
     };
     const movieCardView = new MovieCardView(movie, { onClick, onWatchinglistButtonClick, onAlreadyWatchedlistButtonClick, onFavoriteListButtonClick});
@@ -84,9 +87,8 @@ export default class MovieCardsPresenter {
   }
 
   #handleError(movieId) {
-    this.uiBlocker.unblock();
+    this.#uiBlocker.unblock();
     const movieCardView = this.#movieViewMap.get(movieId);
     movieCardView.shake(() => movieCardView.updateElement({}));
   }
-
 }

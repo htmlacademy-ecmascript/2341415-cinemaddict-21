@@ -22,7 +22,7 @@ export default class BoardPresenter {
     this.#footerContainer = footerContainer;
   }
 
-  run() {
+  init() {
     this.#renderLogo();
     this.#moviesModel.addObserver(
       EVENTS.MODEL_INITIALIZED,
