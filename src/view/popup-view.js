@@ -1,6 +1,7 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import { getDurationString } from '../utils.js';
 import he from 'he';
+import { differenceInCalendarYears, differenceInDays, differenceInHours, differenceInMinutes, differenceInMonths, differenceInWeeks } from 'date-fns';
 
 const emojiIconPath = {
   smile: './images/emoji/smile.png',
@@ -19,10 +20,58 @@ function getReliaseDate(isoStr) {
   return `${date.getDate()} ${month} ${date.getFullYear()}`;
 }
 
-function getCommentDate(isoStr) {
-  const dateComment = new Date(isoStr);
-  const result = `${dateComment.getFullYear()}/${dateComment.getMonth() + 1}/${dateComment.getDate()} ${dateComment.getHours()}:${dateComment.getMinutes()}`;
-  return result;
+function getQuantityPostfix(count) {
+  const SINGLE_VALUE = 1;
+
+  return count > SINGLE_VALUE ? 's' : '';
+}
+
+function getDateDifferenceMessage(difference, unit) {
+  return `${difference} ${unit}${getQuantityPostfix(difference)} ago.`;
+}
+
+
+function getCommentDateMessage(isoStr) {
+  const now = new Date();
+  const commentDate = new Date(isoStr);
+  const differenceInYears = differenceInCalendarYears(now, commentDate);
+
+  if (differenceInYears > 0) {
+    return getDateDifferenceMessage(differenceInYears, 'year');
+  }
+
+  const diffInMonths = differenceInMonths(now, commentDate);
+
+  if (diffInMonths > 0) {
+    return getDateDifferenceMessage(diffInMonths, 'month');
+  }
+
+  const diffInWeeks = differenceInWeeks(now, commentDate);
+
+  if (diffInWeeks > 0) {
+    return getDateDifferenceMessage(diffInWeeks, 'week');
+  }
+
+  const diffInDays = differenceInDays(now, commentDate);
+
+  if (diffInDays > 0) {
+    return getDateDifferenceMessage(diffInDays, 'day');
+  }
+
+  const diffInHours = differenceInHours(now, commentDate);
+
+  if (diffInHours > 0) {
+    return getDateDifferenceMessage(diffInHours, 'hour');
+  }
+
+  const diffInMinutes = differenceInMinutes(now, commentDate);
+
+  if (diffInMinutes > 0) {
+    return getDateDifferenceMessage(diffInMinutes, 'minute');
+  }
+
+  return 'now';
+
 }
 
 function createCommentTemplate({emotion, comment, author, date, id}) {
@@ -35,7 +84,7 @@ function createCommentTemplate({emotion, comment, author, date, id}) {
             <p class="film-details__comment-text">${comment}</p>
             <p class="film-details__comment-info">
               <span class="film-details__comment-author">${author}</span>
-              <span class="film-details__comment-day">${getCommentDate(date)}</span>
+              <span class="film-details__comment-day">${getCommentDateMessage(date)}</span>
               <button data-commentId=${id} class="film-details__comment-delete">Delete</button>
             </p>
           </div>
@@ -171,30 +220,37 @@ export default class PopupView extends AbstractStatefulView {
   #handleCommentAddingClick = null;
   #handleCommentDeleteClick = null;
 
+  #removeKeyListteners() {
+    document.removeEventListener('keydown', this.#escHandler);
+    document.removeEventListener('keydown', this.#ctrlKeydownHandler);
+    document.removeEventListener('keyup', this.#ctrlKeyupHandler);
+    document.removeEventListener('keydown', this.#enterKeydownHandler);
+  }
+
   #enterKeydownHandler = (evt) => {
-    if (evt.code === 'Enter' && this._state.isCtrlPressed) {
+    if (evt.code === 'Enter' && this._state.isAdditionalKeyPressed) {
       this.#addComment();
     }
   };
 
   #ctrlKeydownHandler = (evt) => {
-    if (evt.code.startsWith('Control')) {
-      this._setState({ isCtrlPressed: true });
+    if (evt.ctrlKey || evt.metaKey) {
+      this._setState({ isAdditionalKeyPressed: true });
     }
   };
 
   #ctrlKeyupHandler = (evt) => {
-    if (evt.code.startsWith('Control')) {
-      this._setState({ isCtrlPressed: false });
+    if (evt.ctrlKey || evt.metaKey) {
+      this._setState({ isAdditionalKeyPressed: false });
     }
   };
 
   #escHandler = (evt) => {
     if (evt.code === 'Escape') {
       evt.preventDefault();
+      this.#removeKeyListteners();
       this.#handlePopupEsc();
     }
-    document.removeEventListener('keydown', this.#escHandler);
   };
 
   constructor({ movie, comments }, { onCancel, onEsc, onWatchinglistButtonClick, onAlreadyWatchedButtonClick, onFavoriteButtonClick, onCommentAddingClick, onCommentDeleteClick }) {
@@ -244,8 +300,6 @@ export default class PopupView extends AbstractStatefulView {
   shakeAddingComment(callback) {
     const addingCommentContainer = document.querySelector('.film-details__new-comment');
     this.shakeElement(addingCommentContainer, callback);
-    // this.#resetCommentText();
-    // this._setState({ selectedEmoji: null });
   }
 
   shakePopupFilters(callback) {
@@ -257,6 +311,7 @@ export default class PopupView extends AbstractStatefulView {
     const closeButton = this.element.querySelector('.film-details__close-btn');
     closeButton.addEventListener('click', (evt) => {
       evt.preventDefault();
+      this.#removeKeyListteners();
       this.#handlePopupCancel();
     });
   }

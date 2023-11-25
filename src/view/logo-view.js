@@ -1,5 +1,5 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
-import { PROFILE_RATING } from '../const.js';
+import { PROFILE_RATING, RATING_MIN_WATCHED_MOVIES } from '../const.js';
 
 function createLogoTemplate({ historyMoviesCount }) {
 
@@ -10,15 +10,15 @@ function createLogoTemplate({ historyMoviesCount }) {
 }
 
 function getRating(historyMoviesCount) {
-  if (historyMoviesCount < 1) {
+  if (historyMoviesCount < RATING_MIN_WATCHED_MOVIES.NOVICE) {
     return '';
   }
 
-  if (historyMoviesCount <= 10) {
+  if (historyMoviesCount <= RATING_MIN_WATCHED_MOVIES.FAN) {
     return PROFILE_RATING.NOVICE;
   }
 
-  if (historyMoviesCount <= 20) {
+  if (historyMoviesCount <= RATING_MIN_WATCHED_MOVIES.BUFF) {
     return PROFILE_RATING.FAN;
   }
 

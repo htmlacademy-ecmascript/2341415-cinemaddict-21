@@ -1,6 +1,6 @@
 import ApiService from '../framework/api-service.js';
 import { auth, endPoint } from './server-const.js';
-import { keysToSnakeCase, keysToCamelCase, wait } from '../utils.js';
+import { keysToSnakeCase, keysToCamelCase } from '../utils.js';
 
 export default class MoviesApi extends ApiService {
 
@@ -10,7 +10,6 @@ export default class MoviesApi extends ApiService {
 
   async getList() {
     const responce = await this._load({ url: 'cinemaddict/movies' });
-    await wait(1000);
     return ApiService.parseResponse(responce);
   }
 
