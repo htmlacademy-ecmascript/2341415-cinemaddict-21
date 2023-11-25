@@ -16,7 +16,8 @@ const EVENTS = {
   MODEL_INITIALIZED: 'model_initialized',
   MOVIE_COMMENT_ADDED: 'movie_comment_added',
   MOVIE_COMMENT_DELETED: 'movie_comment_deleted',
-  MOVIES_LOADED: 'movies_loaded'
+  MOVIES_LOADED: 'movies_loaded',
+  DATA_LOADING_ERROR: 'data_loading_error'
 };
 
 function getRelizeTimestamp(movie) {
@@ -49,12 +50,16 @@ export default class MoviesModel extends Publisher {
   }
 
   async init() {
-    const movies = await this.#moviesApi.getList();
-    this._notify(EVENTS.MOVIES_LOADED);
-    movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
-    this.addDisplayedMovies();
-    this.#segregateMoviesByFilters();
-    this._notify(EVENTS.MODEL_INITIALIZED);
+    try {
+      const movies = await this.#moviesApi.getList();
+      this._notify(EVENTS.MOVIES_LOADED);
+      movies.map(keysToCamelCase).forEach((movie) => this.#moviesMap.set(movie.id, movie));
+      this.addDisplayedMovies();
+      this.#segregateMoviesByFilters();
+      this._notify(EVENTS.MODEL_INITIALIZED);
+    } catch(err) {
+      this._notify(EVENTS.DATA_LOADING_ERROR);
+    }
   }
 
   setSortingOrder(sortingOrder) {
@@ -150,7 +155,7 @@ export default class MoviesModel extends Publisher {
 
   get sortedMovies() {
     const sortMovies = SORTERS[this.#sortingOrder];
-    return this.filtredMovies.sort(sortMovies);
+    return [...this.filtredMovies].sort(sortMovies);
   }
 
   get moviesLength() {

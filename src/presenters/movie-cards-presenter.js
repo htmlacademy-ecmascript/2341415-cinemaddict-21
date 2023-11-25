@@ -14,6 +14,7 @@ export default class MovieCardsPresenter {
   #popupPresenter = null;
   moviesModel = null;
   #movieViewMap = new Map();
+  #preLoadMoviesMessageView = null;
 
   #uiBlocker = new UiBlocker({
     lowerLimit: TimeLimit.LOWER_LIMIT,
@@ -27,7 +28,8 @@ export default class MovieCardsPresenter {
   }
 
   init() {
-    this.#cardsContainer.add(new PreLoadMoviesMessageView());
+    this.#preLoadMoviesMessageView = new PreLoadMoviesMessageView('Loading...');
+    this.#cardsContainer.add(this.#preLoadMoviesMessageView);
 
     this.moviesModel.addObserver(EVENTS.DISPLAYED_MOVIES_ADDED, (movies) => this.#onDisplayedMoviesAdded(movies));
 
@@ -43,13 +45,23 @@ export default class MovieCardsPresenter {
 
     this.moviesModel.addObserver(
       EVENTS.SELECTED_FILTER_CHANGED,
-      () => this.#cardsContainer.clear()
+      () => this.#clearCardsContainer()
+    );
+
+    this.moviesModel.addObserver(
+      EVENTS.DATA_LOADING_ERROR,
+      () => this.#preLoadMoviesMessageView.updateElement({ message: 'Application error. Please, try your request later.' })
     );
 
     this.moviesModel.addObserver(
       EVENTS.MOVIES_LOADED,
-      () => this.#cardsContainer.clear()
+      () => this.#clearCardsContainer()
     );
+  }
+
+  #clearCardsContainer() {
+    this.#cardsContainer.clear();
+    this.#preLoadMoviesMessageView = null;
   }
 
   #onDisplayedMoviesAdded(movies) {
@@ -60,7 +72,7 @@ export default class MovieCardsPresenter {
   }
 
   onDisplayedMoviesChanged(displayedMovies) {
-    this.#cardsContainer.clear();
+    this.#clearCardsContainer();
     this.#onDisplayedMoviesAdded(displayedMovies);
   }
 

@@ -1,18 +1,22 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
-function createPreLoadMoviesMessageTemplate() {
+function createPreLoadMoviesMessageTemplate({ message }) {
   return `<section class="films-list">
-    <h2 class="films-list__title">Loading...</h2>
+    <h2 class="films-list__title">${message}</h2>
   </section>`;
 }
 
-export default class PreLoadMoviesMessageView extends AbstractView {
+export default class PreLoadMoviesMessageView extends AbstractStatefulView {
 
-  constructor() {
+  constructor(message) {
     super();
+    this._setState({ message });
+  }
+
+  _restoreHandlers() {
   }
 
   get template() {
-    return createPreLoadMoviesMessageTemplate();
+    return createPreLoadMoviesMessageTemplate(this._state);
   }
 }
