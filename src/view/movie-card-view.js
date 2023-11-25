@@ -1,6 +1,7 @@
-import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
 import { getDurationString } from '../utils.js';
+import { MAX_COMMENT_LENGTH } from '../const.js';
 
 function createMovieCardTemplate(movie) {
 
@@ -8,7 +9,7 @@ function createMovieCardTemplate(movie) {
   const { watchlist, alreadyWatched, favorite } = userDetails;
   const { poster, alternativeTitle, totalRating, release, duration, description, genre } = filmInfo;
   const { date } = release;
-  const descriptionCut = description.slice(0, 139).concat('...');
+  const descriptionCut = description.slice(0, MAX_COMMENT_LENGTH).concat('...');
 
   return `
       <article class="film-card">
@@ -21,7 +22,7 @@ function createMovieCardTemplate(movie) {
             <span class="film-card__genre">${genre}</span>
           </p>
           <img src="./${poster}" alt="" class="film-card__poster">
-          <p class="film-card__description">${description.length > 139 ? descriptionCut : description}</p>
+          <p class="film-card__description">${description.length > MAX_COMMENT_LENGTH ? descriptionCut : description}</p>
           <span class="film-card__comments">${comments.length} comments</span>
         </a>
         <div class="film-card__controls">

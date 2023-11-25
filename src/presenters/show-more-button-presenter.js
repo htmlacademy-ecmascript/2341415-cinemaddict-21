@@ -28,6 +28,13 @@ export default class ShowMoreButtonPresenter {
         this.#showMoreButtonView.show();
       }
     );
+
+    this.#moviesModel.addObserver(
+      EVENTS.DATA_LOADING_ERROR,
+      () => {
+        this.#showMoreButtonView.hide();
+      }
+    );
   }
 
   #renderShowMoreButton() {
